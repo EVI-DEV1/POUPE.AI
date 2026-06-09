@@ -1,8 +1,7 @@
+import type { FormStepProps } from '@/components/features/Simulation/FormStep';
 import { CalendarClock, CreditCard, Goal, Landmark, PiggyBank, Wallet } from 'lucide-react';
 
-import type { FormStepProps } from '../components/features/Simulation/FormStep';
-
-export const simulationFormSteps: FormStepProps[] = [
+export const simulationFormSteps = [
   {
     id: 'income',
     icon: PiggyBank,
@@ -11,7 +10,7 @@ export const simulationFormSteps: FormStepProps[] = [
     inputProps: {
       placeholder: 'ex 5000,00',
       prefix: 'R$',
-      maxLenght: 12,
+      maxLength: 12,
     },
   },
   {
@@ -22,7 +21,7 @@ export const simulationFormSteps: FormStepProps[] = [
     inputProps: {
       placeholder: 'ex 2.000,00',
       prefix: 'R$',
-      maxLenght: 12,
+      maxLength: 12,
     },
   },
   {
@@ -33,7 +32,7 @@ export const simulationFormSteps: FormStepProps[] = [
     inputProps: {
       placeholder: 'ex 500,00',
       prefix: 'R$',
-      maxLenght: 12,
+      maxLength: 12,
     },
   },
   {
@@ -43,8 +42,7 @@ export const simulationFormSteps: FormStepProps[] = [
     question: ' Qual o objetivo que você deseja alcançar?',
     inputProps: {
       placeholder: 'ex:Viagem para o japão',
-      prefix: 'R$',
-      maxLenght: 50,
+      maxLength: 50,
     },
   },
   {
@@ -55,7 +53,7 @@ export const simulationFormSteps: FormStepProps[] = [
     inputProps: {
       placeholder: '15.000,00',
       prefix: 'R$',
-      maxLenght: 12,
+      maxLength: 12,
     },
   },
   {
@@ -75,4 +73,8 @@ export const simulationFormSteps: FormStepProps[] = [
       emojiIcon: '🌟',
     },
   },
-];
+] satisfies FormStepProps[];
+
+export type SimulationFormData = Record<(typeof simulationFormSteps)[number]['id'], string>;
+
+export type SimulationRecord = SimulationFormData & { id: string };
