@@ -1,15 +1,25 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, useRef } from 'react'
 
 import { buildAIPrompt } from '@/data/aiPrompt';
 import { useSimulationStorage } from '@/hooks/useSimulationStorage';
 import { getInsight, type InsightData } from '@/services/aiService';
+import type { SimulationRecord } from '@/data/simulation';
 
 export const useInsight = (id: string) => {
-  const [insight, setInsight] = useState<InsightData | null>(null);
+  const isRequestPending = useRef(false)
+
+   const { getFormData, updateSimulation } = useSimulationStorage();
+   
+  const [insight, setInsight] = useState<InsightData | null>(() => {
+ const simulation = getFormData(id)
+   if (simulation?.insight) {
+      return simulation.insight
+   }
+
+  })
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const { getFormData } = useSimulationStorage();
 
   // Necessário o uso do useCallback pois temos que colocar essa função
   // Como array de dependências do useEffect
@@ -21,24 +31,31 @@ export const useInsight = (id: string) => {
         setError('Simulação não encontrada.');
         return;
       }
-
+      isRequestPending.current = true
       setIsLoading(true);
       setError(null);
       try {
         const prompt = buildAIPrompt(simulation);
         const data = await getInsight(prompt);
         setInsight(data);
+
+        updateSimulation(simulationId, {
+      ...simulation,  
+      insight: (data)
+        } as SimulationRecord)
       } catch {
         setError('Erro ao gerar o diagnóstico. Tente novamente.');
       } finally {
+          isRequestPending.current = false
         setIsLoading(false);
+
       }
     },
-    [getFormData]
+    [getFormData, updateSimulation]
   );
   useEffect(() => {
     //Evita loop infinito de requisições para o API do Gemini
-    if (insight || isLoading || error) {
+    if (insight || isLoading || error ||  isRequestPending.current ) {
       return;
     }
 

@@ -2,7 +2,7 @@ import { AIInsightsCard } from '@/components/features/SimulationsResults/AIInsig
 import { Card } from '@/components/features/SimulationsResults/Card';
 import { PageHero } from '@/components/shared/PageHero';
 import { useSimulationStorage } from '@/hooks/useSimulationStorage';
-import { calcMonthlySavings } from '@/utils/simulation';
+import {calcMonthlySavings, calcRequiredMonthlySavings,} from '@/utils/simulation';
 import { CalendarClock, CreditCardIcon, Goal, Landmark, PiggyBank, Wallet } from 'lucide-react';
 import { useParams } from 'react-router-dom';
 
@@ -16,28 +16,55 @@ export function SimulationResultsPage() {
   }
   const monthlySavings = calcMonthlySavings(data);
 
+const requiredMonthlySavings = calcRequiredMonthlySavings(data);
+
   return (
     <main className="mx-auto max-w-6xl px-4 py-10 sm:py-14">
       <PageHero
         title="Resultado da sua simulação"
         subtitle=" Com base no seu perfil financeiro e objetivos."
       />
-      <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <Card icon={Goal} label="Custo da Meta" value={data.goalAmount} subtitle={data.goalName} />
+      <div className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
+  <Card
+    icon={Goal}
+    label="Meta"
+    value={data.goalAmount}
+    subtitle={data.goalName}
+  />
 
-        <Card
-          icon={CalendarClock}
-          label="Prazo"
-          value={`${data.goalDeadline} meses`}
-          subtitle={'Prazo para atingir a meta'}
-        />
-        <Card
-          variant="primary"
-          icon={PiggyBank}
-          label="Economia mensal"
-          value={`R$ ${monthlySavings.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumSignificantDigits: 2 })} meses`}
-          subtitle={'Economia mensal necessária'}
-        />
+  <Card
+    icon={CalendarClock}
+    label="Prazo"
+    value={`${data.goalDeadline} meses`}
+    subtitle="Prazo escolhido"
+  />
+
+  <Card
+    variant="primary"
+    icon={PiggyBank}
+    label="Capacidade de Economia"
+    value={`R$ ${monthlySavings.toLocaleString('pt-BR', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`}
+    subtitle="Disponível por mês"
+  />
+
+  <Card
+    icon={Goal}
+    label="Economia Necessária"
+    value={`R$ ${requiredMonthlySavings.toLocaleString(
+      'pt-BR',
+      {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      },
+    )}`}
+
+
+ subtitle="Valor necessário para atingir a meta"
+  />
+
       </div>
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <AIInsightsCard simulationId={data.id} />

@@ -1,4 +1,5 @@
 import type { FormStepProps } from '@/components/features/Simulation/FormStep';
+import type { InsightData } from '@/services/aiService';
 import { CalendarClock, CreditCard, Goal, Landmark, PiggyBank, Wallet } from 'lucide-react';
 
 export const simulationFormSteps = [
@@ -49,7 +50,7 @@ export const simulationFormSteps = [
     id: 'goalAmount',
     icon: Wallet,
     title: 'Custo da meta',
-    question: ' Quanto custa realizar esse sonho?',
+    question: ' Qual o valor aproximado desse objetivo??',
     inputProps: {
       placeholder: '15.000,00',
       prefix: 'R$',
@@ -77,4 +78,8 @@ export const simulationFormSteps = [
 
 export type SimulationFormData = Record<(typeof simulationFormSteps)[number]['id'], string>;
 
-export type SimulationRecord = SimulationFormData & { id: string };
+export type SimulationRecord = SimulationFormData & { 
+  id: string 
+  createdAt: string
+   insight?: InsightData;
+};
