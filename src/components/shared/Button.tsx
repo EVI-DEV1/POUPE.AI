@@ -12,9 +12,22 @@ const variantClasses = {
   secondary: 'bg-secondary-button border border-border rounded-3xl',
   ghost: 'rounded-lg text-foreground',
 };
-export function Button({ variant, icon: Icon, children, className, ...props }: ButtonProps) {
+export function Button({
+  variant = 'primary',
+  icon: Icon,
+  children,
+  className,
+  ...props
+}: ButtonProps) {
   return (
-    <button {...props} className={[baseClasses, variantClasses[variant], className].join(' ')}>
+    <button
+      {...props}
+      className={[
+        baseClasses,
+        variantClasses[variant],
+        className,
+      ].join(' ')}
+    >
       {Icon && <Icon size={20} />}
       {children}
     </button>
