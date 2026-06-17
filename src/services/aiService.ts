@@ -54,3 +54,11 @@ export const getInsight = async (prompt: string) => {
   const json = response.candidates[0].content.parts[0].text;
   return JSON.parse(json) as InsightData;
 };
+export const askQuestion = async (prompt: string) => {
+  const response = await callGeminiAPI(prompt)
+
+  return response.candidates[0].content.parts[0].text
+  .replace(/\*\*/g, '')
+  .replace(/###/g, '')
+  .replace(/##/g, '')
+}

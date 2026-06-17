@@ -11,12 +11,10 @@ export const useInsight = (id: string) => {
    const { getFormData, updateSimulation } = useSimulationStorage();
    
   const [insight, setInsight] = useState<InsightData | null>(() => {
- const simulation = getFormData(id)
-   if (simulation?.insight) {
-      return simulation.insight
-   }
+  const simulation = getFormData(id)
 
-  })
+  return simulation?.insight ?? null
+})
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 

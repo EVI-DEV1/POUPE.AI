@@ -19,8 +19,9 @@ export interface FormStepProps {
 }
 
 interface ActionsButtonsProps {
-  onBack: () => void;
+   value?: string;
   onNext: (value: string) => void;
+   onBack?: () => void;
   hideBackButton?: boolean;
 }
 
@@ -31,10 +32,11 @@ export function FormStep({
   inputProps,
   submitButtonProps,
   hideBackButton,
+  value,
   onBack,
   onNext,
 }: FormStepProps & ActionsButtonsProps) {
-  const [inputValue, setInputValue] = useState('');
+  const [inputValue, setInputValue] = useState(value ?? '');
 
   const handleSubmit = (e: SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();

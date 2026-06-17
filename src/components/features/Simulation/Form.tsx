@@ -36,13 +36,14 @@ export const SimulationForm = () => {
   return (
     <>
       <StepProgress currentStep={currentStepIndex + 1} totalSteps={totalSteps} />
-      <FormStep
-        key={currentStep.id}
-        {...currentStep}
-        onBack={handlePreviousStep}
-        onNext={handleNextStep}
-        hideBackButton={currentStepIndex === 0}
-      />
+     <FormStep
+  key={currentStep.id}
+  {...currentStep}
+  value={formData[currentStep.id] ?? ''}
+  onBack={handlePreviousStep}
+  onNext={handleNextStep}
+  hideBackButton={currentStepIndex === 0}
+/>
     </>
   );
 };

@@ -2,6 +2,7 @@ import type { FormStepProps } from '@/components/features/Simulation/FormStep';
 import type { InsightData } from '@/services/aiService';
 import { CalendarClock, CreditCard, Goal, Landmark, PiggyBank, Wallet } from 'lucide-react';
 
+
 export const simulationFormSteps = [
   {
     id: 'income',
@@ -78,8 +79,16 @@ export const simulationFormSteps = [
 
 export type SimulationFormData = Record<(typeof simulationFormSteps)[number]['id'], string>;
 
-export type SimulationRecord = SimulationFormData & { 
-  id: string 
+export interface ChatMessage {
+  id: string
+  role: 'user' | 'assistant'
+  content: string
+
+}
+
+export type SimulationRecord = SimulationFormData & {
+  id: string
   createdAt: string
-   insight?: InsightData;
-};
+  insight?: InsightData
+  chatHistory?: ChatMessage[]
+}
