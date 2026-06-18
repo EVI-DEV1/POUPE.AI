@@ -101,21 +101,30 @@
 ⬡ Como Executar
 
 git clone https://github.com/SEU-USUARIO/SEU-REPO.git
+
 cd nome-do-projeto
+
 npm install
+
 npm run dev
+
 
 ⬡ Scripts Disponíveis
 
+
 ⬡ npm run dev → ambiente de desenvolvimento
+
 ⬡ npm run build → build de produção
+
 ⬡ npm run preview → visualização local
+
 ⬡ npm run lint → análise de código
 
 
 ---
 
 ⬡ *Aprendizados* 
+
 Este projeto contribuiu para o desenvolvimento de habilidades como:
 
 * Estruturação de aplicações React
