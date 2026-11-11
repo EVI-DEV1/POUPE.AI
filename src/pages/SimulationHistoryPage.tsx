@@ -1,156 +1,179 @@
+import { Calculator, ExternalLink, Search } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
+
+import { SimulationActions } from '@/components/features/Simulation/SimulationActions';
 import { PageHero } from '@/components/shared/PageHero';
-import type { SimulationRecord } from '@/data/simulation';
-import { useSimulationStorage } from '@/hooks/useSimulationStorage';
-import { calcRequiredMonthlySavings, calcMonthlySavings,} from '@/utils/simulation';
-import { Goal, Trash2, ExternalLink } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { buttonClasses } from '@/components/ui/buttonStyles';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { StatusBadge } from '@/components/ui/StatusBadge';
+import { useSimulations } from '@/hooks/useSimulationStorage';
+import { GOAL_CATEGORIES, inferCategory } from '@/utils/categories';
+import { type FeasibilityStatus, getSimulationStatus } from '@/utils/finance';
+import { formatBRL, formatDate } from '@/utils/format';
+import { calcMonthlySavings, calcRequiredMonthlySavings } from '@/utils/simulation';
+
+type StatusFilter = 'all' | FeasibilityStatus;
+
+const FILTERS: { value: StatusFilter; label: string }[] = [
+  { value: 'all', label: 'Todas' },
+  { value: 'viable', label: 'Viáveis' },
+  { value: 'needs_adjustment', label: 'Atenção' },
+  { value: 'unfeasible', label: 'Inviáveis' },
+];
+
+function Metric({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="min-w-0">
+      <p className="text-muted-foreground text-[0.7rem] font-semibold uppercase tracking-wider">
+        {label}
+      </p>
+      <p className="truncate font-semibold tabular-nums">{value}</p>
+    </div>
+  );
+}
 
 export function SimulationHistoryPage() {
-  const navigate = useNavigate();
+  const simulations = useSimulations();
+  const [query, setQuery] = useState('');
+  const [status, setStatus] = useState<StatusFilter>('all');
 
-  const { getAllSimulations, deleteSimulation } =
-    useSimulationStorage();
-
-  const [simulations, setSimulations] = useState<
-    SimulationRecord[]
-  >([]);
-
-  useEffect(() => {
-    setSimulations(getAllSimulations());
-  }, []);
-
-  const handleDelete = (id: string) => {
-    deleteSimulation(id);
-
-    setSimulations((prev) =>
-      prev.filter((simulation) => simulation.id !== id),
-    );
-  };
+  const items = useMemo(
+    () =>
+      [...simulations]
+        .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+        .map((simulation) => ({ simulation, status: getSimulationStatus(simulation) }))
+        .filter(
+          ({ simulation, status: s }) =>
+            (status === 'all' || s === status) &&
+            simulation.goalName.toLowerCase().includes(query.trim().toLowerCase())
+        ),
+    [simulations, query, status]
+  );
 
   return (
-    <main className="mx-auto max-w-6xl px-4 py-10 sm:py-14">
+    <div className="mx-auto w-full max-w-[1400px] py-2">
       <PageHero
         title="Histórico de Simulações"
         subtitle="Acompanhe o histórico dos seus planos financeiros."
+        actions={
+          <Link to="/simulacoes" className={buttonClasses('primary', 'md')}>
+            <Calculator size={16} aria-hidden /> Nova simulação
+          </Link>
+        }
       />
 
-      <div className="space-y-4">
-        {simulations.map((simulation) => {
-        const requiredMonthlySavings =
-        calcRequiredMonthlySavings(simulation);
-         const monthlySavings =
-         calcMonthlySavings(simulation);
-
-          return (
-            <div
-              key={simulation.id}
-              className="bg-card rounded-2xl p-6 shadow-[4px_4px_18px_0px_rgba(0,0,0,0.2)]"
-            >
-              <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-                <div className="flex w-[280px] shrink-0 items-center gap-4">
-                  <Goal
-                    size={32}
-                    className="text-primary"
-                  />
-
-                  <div>
-                    <h2 className="text-xl font-bold">
-                      {simulation.goalName}
-                    </h2>
-
-                    <p className="text-muted-foreground text-sm">
-                      {new Date(
-                        simulation.createdAt,
-                      ).toLocaleDateString('pt-BR')}
-                    </p>
-                  </div>
-                </div>
-                <div>
-  <p className="text-muted-foreground text-xs uppercase">
-    Capacidade de Economia
-  </p>
-
-              <p className="font-semibold">
-                 R${' '}
-                   {monthlySavings.toLocaleString('pt-BR', {
-                 minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-                   })}
-            </p>
-              </div>
-
-                <div>
-                  <p className="text-muted-foreground text-xs uppercase">
-                    Custo da Meta
-                  </p>
-
-                  <p className="font-semibold">
-                    R$ {simulation.goalAmount}
-                  </p>
-                </div>
-
-                <div>
-                  <p className="text-muted-foreground text-xs uppercase">
-                    Prazo
-                  </p>
-
-                  <p className="font-semibold">
-                    {simulation.goalDeadline} meses
-                  </p>
-                </div>
-
-                <div>
-                 <p className="text-muted-foreground text-xs uppercase">
-                     Economia Necessária
-               </p>
-
-                  <p className="font-semibold">
-                    R${' '}
-                       {requiredMonthlySavings.toLocaleString(
-                         'pt-BR',
-                      {
-                        minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                      },
-                    )}
-                  </p>
-                </div>
-
-                <div className="bg-border h-10 w-px mr-1 gap-4" />
-
-                <div className="flex gap-8">
-                  <button
-                    onClick={() =>
-                      handleDelete(simulation.id)
-                    }
-                    
-                  >
-                    <Trash2 size={18}
-                  className="text-red-600"
-                   color="#ef4444" />
-
-                  </button>
-
-                  <button
-                    onClick={() =>
-                      navigate(
-                        `/resultado/${simulation.id}`,
-                      )
-                    }
-                   className="flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-xs text-foreground"
-                  >
-                    
-                    <ExternalLink size={16} />
-                    Ver detalhes
-                    
-                  </button>
-                </div>
-              </div>
+      {simulations.length === 0 ? (
+        <div className="surface">
+          <EmptyState
+            icon={Calculator}
+            title="Seu histórico está vazio"
+            description="Cada simulação que você fizer fica salva aqui, neste navegador."
+            action={
+              <Link to="/simulacoes" className={buttonClasses('primary', 'sm')}>
+                Fazer a primeira simulação
+              </Link>
+            }
+          />
+        </div>
+      ) : (
+        <>
+          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="relative sm:max-w-xs sm:flex-1">
+              <Search
+                size={16}
+                className="text-muted-foreground pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2"
+                aria-hidden
+              />
+              <label htmlFor="history-search" className="sr-only">
+                Filtrar por nome
+              </label>
+              <input
+                id="history-search"
+                type="search"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Filtrar por nome..."
+                className="field h-11 pl-10"
+              />
             </div>
-          );
-        })}
-      </div>
-    </main>
+            <div role="group" aria-label="Filtrar por status" className="flex flex-wrap gap-2">
+              {FILTERS.map((f) => (
+                <button
+                  key={f.value}
+                  type="button"
+                  aria-pressed={status === f.value}
+                  onClick={() => setStatus(f.value)}
+                  className={`rounded-full border px-3.5 py-1.5 text-sm font-medium transition ${status === f.value ? 'border-primary-glow bg-muted-primary text-foreground' : 'border-border text-muted-foreground hover:text-foreground'}`}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {items.length === 0 ? (
+            <p className="text-muted-foreground surface p-8 text-center text-sm" role="status">
+              Nenhuma simulação corresponde aos filtros.
+            </p>
+          ) : (
+            <ul className="space-y-3">
+              {items.map(({ simulation, status: s }) => {
+                const category = GOAL_CATEGORIES[inferCategory(simulation.goalName)];
+                const Icon = category.icon;
+                return (
+                  <li
+                    key={simulation.id}
+                    className="surface hover:border-border-strong p-4 transition sm:p-5"
+                  >
+                    <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
+                      <div className="flex min-w-0 items-center gap-3 lg:w-[280px] lg:shrink-0">
+                        <span className="icon-tile h-11 w-11">
+                          <Icon size={22} aria-hidden />
+                        </span>
+                        <div className="min-w-0">
+                          <h2 className="truncate text-lg font-semibold">{simulation.goalName}</h2>
+                          <p className="text-muted-foreground text-sm">
+                            {formatDate(simulation.createdAt)} • {category.label}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="grid flex-1 grid-cols-2 gap-4 sm:grid-cols-4">
+                        <Metric
+                          label="Capacidade de economia"
+                          value={formatBRL(calcMonthlySavings(simulation))}
+                        />
+                        <Metric label="Custo da meta" value={`R$ ${simulation.goalAmount}`} />
+                        <Metric label="Prazo" value={`${simulation.goalDeadline} meses`} />
+                        <Metric
+                          label="Economia necessária"
+                          value={formatBRL(calcRequiredMonthlySavings(simulation))}
+                        />
+                      </div>
+
+                      <div className="flex items-center gap-2 lg:justify-end">
+                        <StatusBadge status={s} />
+                        <Link
+                          to={`/resultado/${simulation.id}`}
+                          className={buttonClasses(
+                            'secondary',
+                            'sm',
+                            'rounded-full! ml-auto lg:ml-2'
+                          )}
+                        >
+                          <ExternalLink size={14} aria-hidden /> Ver detalhes
+                        </Link>
+                        <SimulationActions simulation={simulation} />
+                      </div>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </>
+      )}
+    </div>
   );
 }

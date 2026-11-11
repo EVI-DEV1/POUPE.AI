@@ -1,25 +1,115 @@
-/* Importing Inter font with various weights for use in the application */
 @import 'tailwindcss';
 @import '@fontsource/inter/400.css';
+@import '@fontsource/inter/500.css';
 @import '@fontsource/inter/600.css';
 @import '@fontsource/inter/700.css';
 @import '@fontsource/inter/800.css';
 @import './styles/theme.css';
 
-@layer base {
-  /* Applying the defined CSS variables to the body element for consistent theming */
-  body {
-  @apply bg-background text-foreground;
-  width: 100%;
-  height: 100%;
-  transition: 
-  background-color 0.3s ease, 
-  color 0.3s ease;
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
 
+@layer base {
+  html,
+  body {
+    @apply bg-background text-foreground;
+    min-height: 100%;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    transition:
+      background-color 0.3s ease,
+      color 0.3s ease;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--primary-glow);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background: rgba(168, 85, 247, 0.35);
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-strong) transparent;
+  }
+}
+
+@layer components {
+  /* Superfície padrão dos cards: fundo, borda sutil e brilho roxo no topo. */
+  .surface {
+    position: relative;
+    border-radius: 1.25rem;
+    border: 1px solid var(--border);
+    background:
+      radial-gradient(120% 80% at 0% 0%, rgba(147, 51, 234, 0.1), transparent 55%), var(--card);
+    box-shadow:
+      var(--shadow-card),
+      inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  }
+
+  .surface-interactive {
+    transition:
+      border-color 0.2s ease,
+      transform 0.2s ease,
+      box-shadow 0.2s ease;
+  }
+
+  .surface-interactive:hover {
+    border-color: var(--border-strong);
+    transform: translateY(-2px);
+  }
+
+  .icon-tile {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border-radius: 0.9rem;
+    color: #fff;
+    background: linear-gradient(140deg, #a855f7 0%, #7c3aed 55%, #6d28d9 100%);
+    box-shadow:
+      0 8px 22px -8px rgba(147, 51, 234, 0.9),
+      inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  }
+
+  .text-gradient {
+    background: linear-gradient(90deg, #c084fc, #f0abfc);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .btn-glow {
+    background: linear-gradient(135deg, #a855f7 0%, #9333ea 50%, #7e22ce 100%);
+    box-shadow:
+      0 10px 30px -10px rgba(147, 51, 234, 0.9),
+      inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  }
+
+  .field {
+    @apply border-border bg-input text-foreground placeholder:text-muted-foreground w-full rounded-xl border px-4 py-3 text-sm outline-none transition;
+  }
+
+  .field:focus {
+    border-color: var(--primary-glow);
+    box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.2);
   }
 }
 
 .lucide {
-  /* Setting the default color for icons to match the foreground color */
- stroke-width: 1.5;
+  stroke-width: 1.75;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

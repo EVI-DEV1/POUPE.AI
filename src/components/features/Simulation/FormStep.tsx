@@ -1,10 +1,9 @@
-import { Button } from '@/components/shared/Button';
-import { type LucideIcon } from 'lucide-react';
+import { ArrowLeft, ArrowRight, type LucideIcon } from 'lucide-react';
+import { type SyntheticEvent, useId, useState } from 'react';
 
 import { Input, type InputProps } from '@/components/shared/Input';
+import { UIButton } from '@/components/ui/Button';
 import { formatCurrencyMask } from '@/utils/currency';
-import { ArrowLeft, ArrowRight } from 'lucide-react';
-import { useState, type SyntheticEvent } from 'react';
 
 export interface FormStepProps {
   id: string;
@@ -19,9 +18,9 @@ export interface FormStepProps {
 }
 
 interface ActionsButtonsProps {
-   value?: string;
+  value?: string;
   onNext: (value: string) => void;
-   onBack?: () => void;
+  onBack?: () => void;
   hideBackButton?: boolean;
 }
 
@@ -37,6 +36,7 @@ export function FormStep({
   onNext,
 }: FormStepProps & ActionsButtonsProps) {
   const [inputValue, setInputValue] = useState(value ?? '');
+  const questionId = useId();
 
   const handleSubmit = (e: SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -48,20 +48,23 @@ export function FormStep({
   };
 
   return (
-    <div className="bg-card rounded-2xl p-6 shadow-[4px_4px_18px_0px_rgba(0,0,0,0.2)] sm:p-8">
-      <div className="bg-primary h-15 w-15 mb-4 flex items-center justify-center rounded-xl">
-        <Icon size={32} className="text-primary-foreground" />
-      </div>
+    <div className="surface animate-fade-up p-6 sm:p-8">
+      <span className="icon-tile mb-5 h-14 w-14">
+        <Icon size={30} aria-hidden />
+      </span>
 
-      <h2 className="text-primary mb-1 text-xs font-semibold uppercase tracking-widest">{title}</h2>
+      <p className="text-primary-glow mb-1 text-xs font-semibold uppercase tracking-widest">
+        {title}
+      </p>
 
-      <h3 className="text-foreground mb-6 text-xl font-semibold leading-snug sm:text-2xl">
+      <h2 id={questionId} className="mb-6 text-xl font-semibold leading-snug sm:text-2xl">
         {question}
-      </h3>
+      </h2>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <Input
           {...inputProps}
+          aria-labelledby={questionId}
           value={inputValue}
           onChange={(e) =>
             setInputValue(
@@ -69,29 +72,28 @@ export function FormStep({
             )
           }
         />
-        <div className="flex flex-col gap-3 sm:flex-row sm:gap-6">
+        <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
           {!hideBackButton && (
-            <Button
-              type="button"
+            <UIButton
               onClick={onBack}
-              variant="ghost"
+              variant="secondary"
+              size="lg"
               icon={ArrowLeft}
-              className="order-2 flex-1 justify-center rounded-xl py-3 sm:order-1"
+              className="order-2 flex-1 sm:order-1"
             >
               Voltar
-            </Button>
+            </UIButton>
           )}
 
-          <Button
+          <UIButton
             type="submit"
-            variant="primary"
-            icon={!submitButtonProps ? ArrowRight : undefined}
+            size="lg"
+            iconRight={!submitButtonProps ? ArrowRight : undefined}
             disabled={!inputValue}
             className="order-1 flex-1 sm:order-2"
           >
-            {submitButtonProps?.label ?? 'Próximo'}
-            {submitButtonProps?.emojiIcon}
-          </Button>
+            {submitButtonProps?.label ?? 'Próximo'} {submitButtonProps?.emojiIcon}
+          </UIButton>
         </div>
       </form>
     </div>

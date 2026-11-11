@@ -45,83 +45,87 @@
 
 ---
 
-⬡ *Demonstração do Sistema*
+⬡ *Demonstração do Sistema — Poupe.ai 2.0*
 
 <p>
-  <img src="https://github.com/user-attachments/assets/08c1e017-bf6a-48f0-a44c-8d826c7c3728" width="24%" />
-  <img src="https://github.com/user-attachments/assets/6da73ded-cc7f-4b5b-99f2-666ca6882bbe" width="24%" />
-  <img src="https://github.com/user-attachments/assets/12ab754a-4c77-43c9-aa86-43ace856d6f9" width="24%" />
-  <img src="https://github.com/user-attachments/assets/9cf639e1-123d-4328-b0b0-9b00ecd3895d" width="24%" />
+  <img src="docs/screenshots/dashboard.png" width="100%" alt="Dashboard do Poupe.ai 2.0" />
+</p>
+<p>
+  <img src="docs/screenshots/dashboard-vazio.png" width="49%" alt="Dashboard para um usuário novo, com estados vazios" />
+  <img src="docs/screenshots/dashboard-claro.png" width="49%" alt="Dashboard no tema claro" />
+</p>
+<p>
+  <img src="docs/screenshots/metas.png" width="49%" alt="Página de metas" />
+  <img src="docs/screenshots/chat.png" width="49%" alt="Chat com IA" />
 </p>
 
-
+> As capturas usam dados de exemplo inseridos apenas no navegador de teste.
 
 ---
+
 
 ⬡ *Funcionalidades do Projeto*
 
-- Criação de simulações financeiras
-
-- Histórico completo de todas as consultas realizadas
-  
-- Cálculo automático de resultados
-
-- Chat integrado para dúvidas e suporte ao usuário
-
-- Armazenamento de histórico no navegador
-
-- Visualização detalhada das simulações
-
-- Remoção de registros do histórico
-
-- Interface responsiva para mobile e desktop
+- **Dashboard** com saldo, economia mensal, meta em andamento, taxa de economia, gráfico de receitas x despesas e pontuação de saúde financeira — tudo calculado a partir dos dados que você informa (sem valores inventados; estados vazios quando falta informação)
+- **Simulações financeiras** em etapas, com diagnóstico gerado por IA, edição e exclusão com confirmação
+- **Histórico** com busca e filtro por viabilidade
+- **Metas** com aportes/retiradas, progresso, prazo e recomendações da IA (é possível transformar uma simulação em meta)
+- **Planejamento mensal**: saldo atual e receitas/despesas de cada mês
+- **Chat com IA** que conhece suas simulações, metas e planejamento — e é instruído a não inventar dados nem afirmar acesso a bancos
+- **Educação financeira** com conteúdos curtos e atalho para perguntar à IA
+- **Busca global** (Ctrl/⌘ + K), **notificações** derivadas dos seus dados e **perfil local** editável
+- Tema escuro/claro, menu lateral recolhível, layout responsivo e navegação por teclado
+- Exportação e limpeza dos dados em Preferências
+- Chave do Gemini protegida no servidor (`/api/gemini`), fora do bundle do navegador
 
 ---
 
+
 ⬡ *Estrutura do Projeto*
 
+```
+📦 api/gemini.ts          → função serverless (Vercel) que chama o Gemini
+📦 server/gemini.ts       → lógica do proxy, compartilhada com o Vite em dev
 📦 src
-
 ┣ 📂 components
-
-┣ 📂 pages
-
-┣ 📂 hooks
-
-┣ 📂 services
-
-┣ 📂 utils
-
-┣ 📂 assets
-
-┣ 📜 main.tsx
+┃ ┣ 📂 layout              → DashboardLayout, Sidebar, Topbar, busca, notificações
+┃ ┣ 📂 features            → Dashboard, Simulation, Goals, Chat, Insights…
+┃ ┗ 📂 ui                  → Modal, botões, cards, menus, estados vazios
+┣ 📂 data                  → tipos, prompts da IA, conteúdos educativos, navegação
+┣ 📂 hooks                 → useSimulationStorage, useInsight, useFinancialOverview
+┣ 📂 lib                   → store reativo sobre o localStorage
+┣ 📂 stores                → metas, planejamento, perfil, preferências, chat
+┣ 📂 pages                 → uma página por rota
+┣ 📂 services              → cliente da IA
+┗ 📂 utils                 → cálculos financeiros, saúde financeira, formatação
+```
 
 ---
 
 ⬡ Como Executar
 
-git clone https://github.com/SEU-USUARIO/SEU-REPO.git
-
-cd nome-do-projeto
-
+```bash
+git clone https://github.com/EVI-DEV1/POUPE.AI.git
+cd POUPE.AI
 npm install
-
+cp .env.example .env   # informe GEMINI_API_KEY
 npm run dev
+```
 
+A IA é chamada pela rota `/api/gemini`: em desenvolvimento ela roda dentro do próprio Vite; na Vercel, em `api/gemini.ts`. Na Vercel, configure a variável de ambiente **GEMINI_API_KEY** (por compatibilidade, `VITE_GEMINI_API_KEY` ainda é aceita, mas só no servidor). Sem a chave, o app funciona normalmente e mostra um aviso amigável nas funções de IA.
 
 ⬡ Scripts Disponíveis
 
-
 ⬡ npm run dev → ambiente de desenvolvimento
 
-⬡ npm run build → build de produção
+⬡ npm run build → verificação de tipos + build de produção
 
-⬡ npm run preview → visualização local
+⬡ npm run preview → visualização local do build (inclui a rota /api/gemini)
 
 ⬡ npm run lint → análise de código
 
-
 ---
+
 
 ⬡ *Aprendizados* 
 
@@ -160,8 +164,6 @@ Este projeto contribuiu para o desenvolvimento de habilidades como:
 - Sistema de autenticação de usuários
 
 - Exportação de relatórios em PDF
-
-- Gráficos interativos de desempenho
 
 - Deploy em ambiente de produção
 

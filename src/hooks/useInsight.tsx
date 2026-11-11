@@ -1,23 +1,22 @@
-import { useCallback, useEffect, useState, useRef } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { buildAIPrompt } from '@/data/aiPrompt';
+import type { SimulationRecord } from '@/data/simulation';
 import { useSimulationStorage } from '@/hooks/useSimulationStorage';
 import { getInsight, type InsightData } from '@/services/aiService';
-import type { SimulationRecord } from '@/data/simulation';
 
 export const useInsight = (id: string) => {
-  const isRequestPending = useRef(false)
+  const isRequestPending = useRef(false);
 
-   const { getFormData, updateSimulation } = useSimulationStorage();
-   
+  const { getFormData, updateSimulation } = useSimulationStorage();
+
   const [insight, setInsight] = useState<InsightData | null>(() => {
-  const simulation = getFormData(id)
+    const simulation = getFormData(id);
 
-  return simulation?.insight ?? null
-})
+    return simulation?.insight ?? null;
+  });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
 
   // Necessário o uso do useCallback pois temos que colocar essa função
   // Como array de dependências do useEffect
@@ -29,7 +28,7 @@ export const useInsight = (id: string) => {
         setError('Simulação não encontrada.');
         return;
       }
-      isRequestPending.current = true
+      isRequestPending.current = true;
       setIsLoading(true);
       setError(null);
       try {
@@ -37,27 +36,34 @@ export const useInsight = (id: string) => {
         const data = await getInsight(prompt);
         setInsight(data);
 
+        // Relê o registro: o usuário pode ter alterado algo enquanto a IA respondia.
+        const latest = getFormData(simulationId) ?? simulation;
         updateSimulation(simulationId, {
-      ...simulation,  
-      insight: (data)
-        } as SimulationRecord)
-      } catch {
-        setError('Erro ao gerar o diagnóstico. Tente novamente.');
+          ...latest,
+          insight: data,
+        } as SimulationRecord);
+      } catch (err) {
+        setError(
+          err instanceof Error && err.message
+            ? err.message
+            : 'Erro ao gerar o diagnóstico. Tente novamente.'
+        );
       } finally {
-          isRequestPending.current = false
+        isRequestPending.current = false;
         setIsLoading(false);
-
       }
     },
     [getFormData, updateSimulation]
   );
+
   useEffect(() => {
     //Evita loop infinito de requisições para o API do Gemini
-    if (insight || isLoading || error ||  isRequestPending.current ) {
+    if (insight || isLoading || error || isRequestPending.current) {
       return;
     }
 
-    fetchInsight(id);
+    void fetchInsight(id);
   }, [id, insight, isLoading, error, fetchInsight]);
+
   return { insight, isLoading, error, fetchInsight };
 };

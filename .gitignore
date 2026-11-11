@@ -22,3 +22,11 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Variáveis de ambiente (chave do Gemini)
+.env
+.env.*
+!.env.example
+
+# Vercel
+.vercel

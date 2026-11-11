@@ -1,247 +1,142 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react';
 
-import type { ChatMessage, SimulationRecord } from '@/data/simulation'
-import { useSimulationStorage } from '@/hooks/useSimulationStorage'
-import type { InsightData } from '@/services/aiService'
-import { askQuestion } from '@/services/aiService'
-import { Send } from 'lucide-react'
-
+import { ChatPanel } from '@/components/features/Chat/ChatPanel';
+import type { ChatMessage, SimulationRecord } from '@/data/simulation';
+import { useSimulationStorage } from '@/hooks/useSimulationStorage';
+import type { InsightData } from '@/services/aiService';
+import { askQuestion } from '@/services/aiService';
 
 interface ChatSectionProps {
-  simulationId: string
-  insight: InsightData
+  simulationId: string;
+  insight: InsightData;
 }
 
-export function ChatSection({
-  simulationId,
-  insight,
-}: ChatSectionProps) {
-  const { getFormData, updateSimulation } = useSimulationStorage()
+const SUGGESTIONS = [
+  'Como posso atingir essa meta mais rápido?',
+  'Onde posso cortar gastos?',
+  'Qual investimento combina com essa meta?',
+];
 
-  const simulation = getFormData(simulationId)
-
-  const [question, setQuestion] = useState('')
+/** Chat contextual da simulação — o histórico continua salvo em `chatHistory`. */
+export function ChatSection({ simulationId, insight }: ChatSectionProps) {
+  const { getFormData, updateSimulation } = useSimulationStorage();
 
   const [messages, setMessages] = useState<ChatMessage[]>(
-    simulation?.chatHistory ?? []
-  )
-
-  const [isLoading, setIsLoading] = useState(false)
-
-  const [error, setError] = useState<string | null>(null)
-
-  const [lastFailedQuestion, setLastFailedQuestion] =
-  useState<string | null>(null)
-
-  const messagesEndRef = useRef<HTMLDivElement>(null)
+    () => getFormData(simulationId)?.chatHistory ?? []
+  );
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [lastFailedQuestion, setLastFailedQuestion] = useState<string | null>(null);
+  const mounted = useRef(true);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({
-      behavior: 'smooth',
-    })
-  }, [messages])
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
 
-async function handleSend(customQuestion?: string) {
-  const questionToSend = customQuestion ?? question
-  console.log(questionToSend);
-console.log(typeof questionToSend);
+  const persist = (chatHistory: ChatMessage[]) => {
+    const current = getFormData(simulationId);
+    if (current) {
+      updateSimulation(simulationId, { ...current, chatHistory } as SimulationRecord);
+    }
+  };
 
-  if (!questionToSend.trim()) return
+  async function handleSend(questionToSend: string, isRetry = false) {
+    if (!questionToSend.trim() || isLoading) return;
 
-  const isRetry = !!customQuestion
+    let updatedMessages = messages;
 
-  let updatedMessages = messages
-
-  if (!isRetry) {
-    const userMessage: ChatMessage = {
-      id: crypto.randomUUID(),
-      role: 'user',
-      content: questionToSend,
+    if (!isRetry) {
+      const userMessage: ChatMessage = {
+        id: crypto.randomUUID(),
+        role: 'user',
+        content: questionToSend,
+      };
+      updatedMessages = [...messages, userMessage];
+      setMessages(updatedMessages);
+      persist(updatedMessages);
     }
 
-    updatedMessages = [...messages, userMessage]
-
-    setMessages(updatedMessages)
-
-    if (simulation) {
-      updateSimulation(
-        simulationId,
-        {
-          ...simulation,
-          chatHistory: updatedMessages,
-        } as SimulationRecord
-      )
-    }
-  }
-    setQuestion('')
-    setError(null)
-    setIsLoading(true)
+    setError(null);
+    setIsLoading(true);
 
     try {
-const prompt = `
-Você é um educador financeiro Você é o Educador Financeiro do aplicativo PoupeAI..
+      const simulation = getFormData(simulationId);
+      const prompt = `
+Você é o Educador Financeiro do aplicativo Poupe.ai.
 
 Dados da simulação:
+${JSON.stringify({
+  renda: simulation?.income,
+  custosFixos: simulation?.expenses,
+  dividas: simulation?.debts,
+  meta: simulation?.goalName,
+  valorMeta: simulation?.goalAmount,
+  prazoMeses: simulation?.goalDeadline,
+})}
+
+Diagnóstico já gerado:
 ${JSON.stringify(insight)}
+
+Conversa até agora:
+${updatedMessages
+  .slice(-8, -1)
+  .map((m) => `${m.role === 'user' ? 'Usuário' : 'Educador'}: ${m.content}`)
+  .join('\n')}
 
 Pergunta do usuário:
 ${questionToSend}
 
 Regras:
-- Responda como uma conversa natural.
-- Seja amigável e acolhedor.
+- Responda como uma conversa natural, amigável e acolhedora.
 - Responda em português.
-- Seja objetivo.
-- Divida a resposta em 2 ou 3 parágrafos curtos.
-- Use no máximo 120 palavras.
-- Não utilize Markdown.
-- Não utilize títulos.
-- Não utilize ** ou ##.
-- Responda como uma conversa natural.
+- Seja objetivo: 2 ou 3 parágrafos curtos, no máximo 120 palavras.
+- Não utilize Markdown, títulos, ** ou ##.
 - Não repita os dados completos da simulação.
-- Foque apenas no que ajuda o usuário naquele momento.
-- Pode usar emojis
-
+- Use apenas os dados acima; nunca invente valores nem diga ter acesso a contas bancárias.
+- Pode usar emojis.
 
 Resposta:
-`
+`;
 
+      const answer = await askQuestion(prompt);
 
-      const answer = await askQuestion(prompt)
+      const finalMessages = [
+        ...updatedMessages,
+        { id: crypto.randomUUID(), role: 'assistant' as const, content: answer },
+      ];
 
-      const assistantMessage: ChatMessage = {
-        id: crypto.randomUUID(),
-        role: 'assistant',
-        content: answer,
+      persist(finalMessages);
+      if (mounted.current) {
+        setMessages(finalMessages);
+        setLastFailedQuestion(null);
       }
-
-     const finalMessages = [
-  ...updatedMessages,
-  assistantMessage,
-]
-
-setMessages(finalMessages)
-
-const currentSimulation = getFormData(simulationId)
-
-if (currentSimulation) {
-  updateSimulation(
-    simulationId,
-    {
-      ...currentSimulation,
-      chatHistory: finalMessages,
-    } as SimulationRecord
-  )
-}
-  } catch (err) {
-  console.error(err)
-
-  setLastFailedQuestion(questionToSend)
-
-  if (err instanceof Error) {
-    setError(err.message)
-  } else {
-    setError('Não foi possível gerar uma resposta.')
-  }
+    } catch (err) {
+      console.error(err);
+      if (mounted.current) {
+        setLastFailedQuestion(questionToSend);
+        setError(err instanceof Error ? err.message : 'Não foi possível gerar uma resposta.');
+      }
     } finally {
-      setIsLoading(false)
+      if (mounted.current) setIsLoading(false);
     }
   }
 
   return (
-    <div className="mt-6 border-t pt-4">
-      <h3 className="mb-4 text-sm font-semibold">
-        💬 Converse com o Educador Financeiro
-      </h3>
-
-      <div className="max-h-96 overflow-y-auto rounded-xl border border-border px-4 py-3">
-        {messages.map((message) => (
-           <div
-    key={message.id}
-    className="mb-4 rounded-xl border border-border p-4"
-  >
-    <p className="mb-2 text-sm font-semibold">
-      {message.role === 'user'
-        ? '💬 Você'
-        : '🤖 Resposta da IA'}
-    </p>
-
-    <p className="text-muted-foreground whitespace-pre-wrap text-sm leading-relaxed">
-      {message.content}
-        </p>
-          </div>
-        ))}
-
-        {isLoading && (
-          <p className="text-muted-foreground text-sm leading-relaxed">
-            🤖 Pensando...
-          </p>
-        )}
-
-        <div ref={messagesEndRef} />
-      </div>
-
-      {error && (
-  <div className="mt-3 flex items-center gap-3">
-    <p className="text-sm text-red-500">
-      {error}
-    </p>
-
-    <button
-    type="button"
-  onClick={() => {
-    if (!lastFailedQuestion) return
-
-    setError(null)
-
-    void handleSend(lastFailedQuestion)
-  }}
-  className="text-primary text-sm font-medium underline"
->
-  Tentar novamente
-    </button>
-  </div>
-)}
-      <div className="mt-4 flex items-center gap-3">
-        <input
-          type="text"
-  value={question}
-  onChange={(e) => setQuestion(e.target.value)}
-  placeholder="Faça uma pergunta sobre sua simulação..."
-  disabled={isLoading}
-  className="
-    bg-background
-    flex-1
-    rounded-full
-    border
-    px-4
-    py-3
-    text-sm
-  " 
-   onKeyDown={(e) => {
-    if (e.key === 'Enter' && !isLoading) {
-      handleSend()
-    }
-  }}
-  />
-        <button
-  onClick={() => void handleSend()}
-  disabled={isLoading}
-  className="
-    bg-primary
-    text-primary-foreground
-    flex
-    h-12
-    w-12
-    items-center
-    justify-center
-    rounded-xl
-    shrink-0
-  " >
-    <Send size={18} />
-       
-        </button>
-      </div>
+    <div className="border-border mt-6 border-t pt-5">
+      <h3 className="mb-3 text-base font-semibold">💬 Converse com o Educador Financeiro</h3>
+      <ChatPanel
+        messages={messages}
+        isLoading={isLoading}
+        error={error}
+        onRetry={lastFailedQuestion ? () => void handleSend(lastFailedQuestion, true) : undefined}
+        onSend={(text) => void handleSend(text)}
+        suggestions={SUGGESTIONS}
+        placeholder="Faça uma pergunta sobre sua simulação..."
+        className="h-[420px]"
+      />
     </div>
-  )
+  );
 }

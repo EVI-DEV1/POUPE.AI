@@ -1,24 +1,24 @@
 import PiggyBankImage from '@/assets/images/piggy-bank.png';
 
-export function SimulationHero() {
+interface SimulationHeroProps {
+  title?: string;
+  subtitle?: string;
+}
+
+export function SimulationHero({
+  title = 'Vamos planejar seu futuro',
+  subtitle = 'Responda algumas questões para ter insights financeiros personalizados',
+}: SimulationHeroProps) {
   return (
-    <div className="mb-8 text-center">
-      <div className="flex flex-col items-center sm:flex-row">
-        <h1 className="text-foreground text-3xl font-semibold sm:text-4xl">
-          Vamos planejar seu futuro
-        </h1>
-
-        <img
-          src={PiggyBankImage}
-          alt=""
-          aria-hidden="true"
-          className="h-16 w-16 sm:-ml-3 sm:-mt-2"
-        />
-      </div>
-
-      <p className="text-muted-foreground text-sm">
-        Responda algumas questões para ter insights financeiros personalizados
-      </p>
+    <div className="mb-8 flex flex-col items-center gap-2 text-center">
+      <img
+        src={PiggyBankImage}
+        alt=""
+        aria-hidden="true"
+        className="animate-float h-20 w-20 drop-shadow-[0_10px_24px_rgba(147,51,234,0.6)]"
+      />
+      <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">{title}</h1>
+      <p className="text-muted-foreground text-sm sm:text-base">{subtitle}</p>
     </div>
   );
 }

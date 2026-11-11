@@ -1,10 +1,11 @@
 import { Outlet } from 'react-router-dom';
-import { Header } from '../shared/Header';
+
+import { DashboardLayout } from './DashboardLayout';
+
 export function RootLayout() {
   return (
-    <>
-      <Header />
+    <DashboardLayout>
       <Outlet />
-    </>
+    </DashboardLayout>
   );
 }

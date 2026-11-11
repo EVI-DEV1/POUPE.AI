@@ -1,84 +1,57 @@
 import { type SimulationFormData, type SimulationRecord } from '@/data/simulation';
+import { createLocalStore, useLocalStore } from '@/lib/localStore';
 
+/**
+ * Mantém a mesma chave e o mesmo formato de dados da versão anterior,
+ * preservando todo o histórico já salvo pelos usuários.
+ */
 const LOCAL_STORAGE_KEY = 'simulation-data';
 
-export const useSimulationStorage = () => {
-  const saveFormData = (formData: SimulationFormData) => {
-    const id = crypto.randomUUID();
-    const record: SimulationRecord = {
-  ...formData,
-  id,
-  createdAt: new Date().toISOString(),
+const EMPTY: SimulationRecord[] = [];
+
+export const simulationStore = createLocalStore<SimulationRecord[]>(
+  LOCAL_STORAGE_KEY,
+  EMPTY,
+  (value) => (Array.isArray(value) ? (value as SimulationRecord[]) : EMPTY)
+);
+
+const saveFormData = (formData: SimulationFormData) => {
+  const id = crypto.randomUUID();
+  const record: SimulationRecord = {
+    ...formData,
+    id,
+    createdAt: new Date().toISOString(),
+  };
+
+  simulationStore.write((saved) => [...saved, record]);
+  return id;
 };
 
-    const storage = localStorage.getItem(LOCAL_STORAGE_KEY);
-
-    const savedData = storage ? (JSON.parse(storage) as SimulationRecord[]) : [];
-
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify([...savedData, record]));
-    return id;
-  };
-
-  const getFormData = (id: string) => {
-    const storage = localStorage.getItem(LOCAL_STORAGE_KEY);
-
-    if (!storage) {
-      return null;
-    }
-    const savedData = JSON.parse(storage) as SimulationRecord[];
-    return savedData.find((record) => record.id === id) || null;
-  };
+const getFormData = (id: string) =>
+  simulationStore.read().find((record) => record.id === id) ?? null;
 
 const updateSimulation = (id: string, data: SimulationRecord) => {
-  const storage = localStorage.getItem(LOCAL_STORAGE_KEY);
-
-  const savedData = storage
-    ? (JSON.parse(storage) as SimulationRecord[])
-    : [];
-
-  const updated = savedData.map((record) =>
-    record.id === id ? { ...data } : record,
+  simulationStore.write((saved) =>
+    saved.map((record) => (record.id === id ? { ...data } : record))
   );
-
-  localStorage.setItem(
-    LOCAL_STORAGE_KEY,
-    JSON.stringify(updated),
-  );
-}; 
-
-const getAllSimulations = () => {
-  const storage = localStorage.getItem(LOCAL_STORAGE_KEY);
-
-  if (!storage) {
-    return [];
-  }
-
-  return JSON.parse(storage) as SimulationRecord[];
 };
+
+const getAllSimulations = () => simulationStore.read();
 
 const deleteSimulation = (id: string) => {
-  const storage = localStorage.getItem(LOCAL_STORAGE_KEY);
-
-  if (!storage) {
-    return;
-  }
-
-  const savedData = JSON.parse(storage) as SimulationRecord[];
-
-  const filtered = savedData.filter(
-    (record) => record.id !== id,
-  );
-
-  localStorage.setItem(
-    LOCAL_STORAGE_KEY,
-    JSON.stringify(filtered),
-  );
+  simulationStore.write((saved) => saved.filter((record) => record.id !== id));
 };
 
-  return { saveFormData,
+const storageApi = {
+  saveFormData,
   getFormData,
   getAllSimulations,
   updateSimulation,
   deleteSimulation,
-  }
 };
+
+/** API imperativa (estável entre renders) — mesma assinatura da versão original. */
+export const useSimulationStorage = () => storageApi;
+
+/** Lista reativa de simulações: re-renderiza quando o histórico muda. */
+export const useSimulations = () => useLocalStore(simulationStore);

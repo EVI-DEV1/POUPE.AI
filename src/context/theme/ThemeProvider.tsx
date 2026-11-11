@@ -4,14 +4,14 @@ import { type Theme, ThemeContext } from './ThemeContext';
 
 export function ThemeProvider({ children }: PropsWithChildren) {
   const [theme, setTheme] = useState<Theme>(() => {
-    const localStorageTheme = localStorage.getItem('theme') as Theme | null;
+    const localStorageTheme = localStorage.getItem('theme');
 
-    if (localStorageTheme) {
+    if (localStorageTheme === 'light' || localStorageTheme === 'dark') {
       return localStorageTheme;
     }
-    const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
 
-    return systemPrefersDark ? 'dark' : 'light';
+    // A identidade visual do Poupe.ai 2.0 é escura; o tema claro continua disponível.
+    return 'dark';
   });
 
   useEffect(() => {
@@ -23,5 +23,9 @@ export function ThemeProvider({ children }: PropsWithChildren) {
     setTheme((currentTheme) => (currentTheme === 'light' ? 'dark' : 'light'));
   };
 
-  return <ThemeContext.Provider value={{ theme, toggleTheme }}>{children}</ThemeContext.Provider>;
+  return (
+    <ThemeContext.Provider value={{ theme, toggleTheme, setTheme }}>
+      {children}
+    </ThemeContext.Provider>
+  );
 }
