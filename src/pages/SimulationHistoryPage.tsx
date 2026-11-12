@@ -12,6 +12,7 @@ import { GOAL_CATEGORIES, inferCategory } from '@/utils/categories';
 import { type FeasibilityStatus, getSimulationStatus } from '@/utils/finance';
 import { formatBRL, formatDate } from '@/utils/format';
 import { calcMonthlySavings, calcRequiredMonthlySavings } from '@/utils/simulation';
+import { sortSimulationsByRecency } from '@/utils/simulationRecords';
 
 type StatusFilter = 'all' | FeasibilityStatus;
 
@@ -40,8 +41,7 @@ export function SimulationHistoryPage() {
 
   const items = useMemo(
     () =>
-      [...simulations]
-        .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+      sortSimulationsByRecency(simulations)
         .map((simulation) => ({ simulation, status: getSimulationStatus(simulation) }))
         .filter(
           ({ simulation, status: s }) =>
@@ -134,7 +134,9 @@ export function SimulationHistoryPage() {
                         <div className="min-w-0">
                           <h2 className="truncate text-lg font-semibold">{simulation.goalName}</h2>
                           <p className="text-muted-foreground text-sm">
-                            {formatDate(simulation.createdAt)} • {category.label}
+                            {[formatDate(simulation.createdAt), category.label]
+                              .filter(Boolean)
+                              .join(' • ')}
                           </p>
                         </div>
                       </div>

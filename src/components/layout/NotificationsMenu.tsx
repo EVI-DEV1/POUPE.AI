@@ -127,9 +127,11 @@ export function NotificationsMenu() {
                         <span className="text-muted-foreground mt-0.5 block text-xs leading-snug">
                           {n.description}
                         </span>
-                        <span className="text-muted-foreground/70 mt-1 block text-[0.7rem]">
-                          {formatDate(n.date)}
-                        </span>
+                        {formatDate(n.date) && (
+                          <span className="text-muted-foreground/70 mt-1 block text-[0.7rem]">
+                            {formatDate(n.date)}
+                          </span>
+                        )}
                       </span>
                       {isUnread && (
                         <span className="bg-primary-glow mt-1.5 h-2 w-2 shrink-0 rounded-full">

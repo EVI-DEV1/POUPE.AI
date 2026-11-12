@@ -3,8 +3,10 @@ import type { SimulationRecord } from '@/data/simulation';
 import type { InsightData } from '@/services/aiService';
 
 import { parseCurrency } from './currency';
+import { compareByRecency, toTimestamp } from './date';
 import { currentMonthKey } from './format';
 import { calcMonthlySavings, calcRequiredMonthlySavings } from './simulation';
+import { sortSimulationsByRecency } from './simulationRecords';
 
 /* ------------------------------------------------------------------ */
 /* Retrato financeiro                                                  */
@@ -80,9 +82,7 @@ export function getFinancialSnapshot(
     };
   }
 
-  const latestSimulation = [...simulations].sort((a, b) =>
-    b.createdAt.localeCompare(a.createdAt)
-  )[0];
+  const latestSimulation = sortSimulationsByRecency(simulations)[0];
 
   if (!latestSimulation) {
     return null;
@@ -189,7 +189,7 @@ export function pickFeaturedGoal(goals: Goal[]) {
       if (a.deadline && b.deadline) return a.deadline.localeCompare(b.deadline);
       if (a.deadline) return -1;
       if (b.deadline) return 1;
-      return b.updatedAt.localeCompare(a.updatedAt);
+      return compareByRecency(toTimestamp(a.updatedAt), toTimestamp(b.updatedAt));
     })[0] ?? null
   );
 }

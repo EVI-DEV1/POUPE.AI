@@ -13,7 +13,9 @@ export const formatPercent = (ratio: number) => `${decimal.format(ratio * 100)}%
 
 export const formatDecimal = (value: number) => decimal.format(value);
 
-export const formatDate = (iso: string) => {
+/** Data no formato pt-BR, ou `''` quando ausente/inválida (nunca lança erro). */
+export const formatDate = (iso: string | null | undefined) => {
+  if (typeof iso !== 'string' || iso === '') return '';
   const date = new Date(iso.length === 10 ? `${iso}T12:00:00` : iso);
   return Number.isNaN(date.getTime()) ? '' : date.toLocaleDateString('pt-BR');
 };

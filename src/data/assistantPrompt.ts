@@ -9,6 +9,7 @@ import {
 import type { FinancialHealth } from '@/utils/financialHealth';
 import { formatBRL, formatDate, formatMonthLong, formatPercent } from '@/utils/format';
 import { calcMonthlySavings, calcRequiredMonthlySavings } from '@/utils/simulation';
+import { sortSimulationsByRecency } from '@/utils/simulationRecords';
 
 export interface AssistantContextData {
   userName: string;
@@ -60,9 +61,7 @@ export function buildAssistantContext({
     lines.push('Metas financeiras: nenhuma cadastrada');
   }
 
-  const recent = [...simulations]
-    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-    .slice(0, 5);
+  const recent = sortSimulationsByRecency(simulations).slice(0, 5);
   if (recent.length > 0) {
     lines.push('Simulações recentes (cenários hipotéticos, não movimentações reais):');
     recent.forEach((s) => {

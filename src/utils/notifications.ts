@@ -1,8 +1,10 @@
 import type { Goal, PlanningData } from '@/data/finance';
 import type { SimulationRecord } from '@/data/simulation';
 
+import { compareByRecency, toTimestamp } from './date';
 import { daysUntil, getSimulationStatus, isGoalCompleted } from './finance';
 import { currentMonthKey, formatMonthLong } from './format';
+import { sortSimulationsByRecency } from './simulationRecords';
 
 export interface AppNotification {
   id: string;
@@ -10,8 +12,21 @@ export interface AppNotification {
   description: string;
   to: string;
   tone: 'info' | 'success' | 'warning';
-  date: string;
+  /** Data ISO de referência; `null` quando a origem não tem data válida. */
+  date: string | null;
 }
+
+/** Mantém a data apenas quando ela é válida — nunca substitui por uma data fictícia. */
+const validDate = (value: unknown): string | null =>
+  toTimestamp(value) === null ? null : (value as string);
+
+/**
+ * Ordem determinística: mais recentes primeiro, sem data no fim e, em caso de
+ * empate, pelo ID (único e estável).
+ */
+export const compareNotifications = (a: AppNotification, b: AppNotification) =>
+  compareByRecency(toTimestamp(a.date), toTimestamp(b.date)) ||
+  (a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
 
 /**
  * Notificações derivadas exclusivamente dos dados do usuário. Os IDs são
@@ -33,7 +48,7 @@ export function buildNotifications(
         description: 'Você alcançou o valor planejado. Que tal definir o próximo objetivo?',
         to: '/metas',
         tone: 'success',
-        date: goal.updatedAt,
+        date: validDate(goal.updatedAt),
       });
       return;
     }
@@ -46,7 +61,7 @@ export function buildNotifications(
         description: 'O prazo desta meta passou. Revise o valor ou defina uma nova data.',
         to: '/metas',
         tone: 'warning',
-        date: goal.deadline,
+        date: validDate(goal.deadline),
       });
     } else if (days !== null && days <= 30) {
       list.push({
@@ -55,13 +70,12 @@ export function buildNotifications(
         description: `Faltam ${days} dia(s) para o prazo desta meta.`,
         to: '/metas',
         tone: 'warning',
-        date: goal.deadline,
+        date: validDate(goal.deadline),
       });
     }
   });
 
-  [...simulations]
-    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+  sortSimulationsByRecency(simulations)
     .slice(0, 5)
     .forEach((simulation) => {
       const status = getSimulationStatus(simulation);
@@ -75,7 +89,7 @@ export function buildNotifications(
               : 'A meta está perto de caber no orçamento. Pequenos ajustes podem resolver.',
           to: `/resultado/${simulation.id}`,
           tone: 'warning',
-          date: simulation.createdAt,
+          date: validDate(simulation.createdAt),
         });
       }
     });
@@ -93,19 +107,21 @@ export function buildNotifications(
     });
   }
 
-  if (planning.currentBalance !== null && planning.balanceUpdatedAt) {
-    const age = (now.getTime() - new Date(planning.balanceUpdatedAt).getTime()) / 86_400_000;
+  const balanceDate = validDate(planning.balanceUpdatedAt);
+  const balanceTime = toTimestamp(balanceDate);
+  if (planning.currentBalance !== null && balanceDate !== null && balanceTime !== null) {
+    const age = (now.getTime() - balanceTime) / 86_400_000;
     if (age > 30) {
       list.push({
-        id: `balance-stale-${planning.balanceUpdatedAt.slice(0, 10)}`,
+        id: `balance-stale-${balanceDate.slice(0, 10)}`,
         title: 'Atualize seu saldo atual',
         description: 'O saldo informado tem mais de 30 dias.',
         to: '/planejamento',
         tone: 'info',
-        date: planning.balanceUpdatedAt,
+        date: balanceDate,
       });
     }
   }
 
-  return list.sort((a, b) => b.date.localeCompare(a.date));
+  return list.sort(compareNotifications);
 }

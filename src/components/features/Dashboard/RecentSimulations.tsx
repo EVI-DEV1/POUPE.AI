@@ -10,6 +10,7 @@ import { GOAL_CATEGORIES, inferCategory } from '@/utils/categories';
 import { getSimulationStatus } from '@/utils/finance';
 import { formatBRL } from '@/utils/format';
 import { calcRequiredMonthlySavings } from '@/utils/simulation';
+import { sortSimulationsByRecency } from '@/utils/simulationRecords';
 
 interface RecentSimulationsProps {
   simulations: SimulationRecord[];
@@ -47,9 +48,7 @@ export function RecentSimulations({
   limit = 3,
   className = '',
 }: RecentSimulationsProps) {
-  const recent = [...simulations]
-    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-    .slice(0, limit);
+  const recent = sortSimulationsByRecency(simulations).slice(0, limit);
 
   return (
     <section aria-labelledby="recent-title" className={`surface p-5 sm:p-6 ${className}`}>

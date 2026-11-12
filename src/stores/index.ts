@@ -63,8 +63,9 @@ export const goalsStore = createLocalStore<Goal[]>('poupeai-goals', EMPTY_GOALS,
         targetAmount: toNumber(g.targetAmount),
         savedAmount: toNumber(g.savedAmount),
         deadline: toString(g.deadline),
-        createdAt: toString(g.createdAt, new Date().toISOString()),
-        updatedAt: toString(g.updatedAt, new Date().toISOString()),
+        // Sem data válida → `null`, em vez de fingir que a meta foi alterada agora.
+        createdAt: typeof g.createdAt === 'string' ? g.createdAt : null,
+        updatedAt: typeof g.updatedAt === 'string' ? g.updatedAt : null,
         contributions: Array.isArray(g.contributions)
           ? (g.contributions as GoalContribution[])
           : [],

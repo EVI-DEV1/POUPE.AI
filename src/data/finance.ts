@@ -18,8 +18,9 @@ export interface Goal {
   savedAmount: number;
   /** Data limite no formato YYYY-MM-DD (opcional). */
   deadline: string;
-  createdAt: string;
-  updatedAt: string;
+  /** Datas ISO; `null` quando o registro salvo não tem uma data válida. */
+  createdAt: string | null;
+  updatedAt: string | null;
   contributions: GoalContribution[];
   /** Simulação que deu origem à meta, quando houver. */
   simulationId?: string;

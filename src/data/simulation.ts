@@ -86,7 +86,11 @@ export interface ChatMessage {
 
 export type SimulationRecord = SimulationFormData & {
   id: string;
-  createdAt: string;
+  /**
+   * Data ISO de criação. Opcional: as primeiras versões do app gravavam
+   * simulações sem esse campo, e esses registros continuam no localStorage.
+   */
+  createdAt?: string;
   insight?: InsightData;
   chatHistory?: ChatMessage[];
 };

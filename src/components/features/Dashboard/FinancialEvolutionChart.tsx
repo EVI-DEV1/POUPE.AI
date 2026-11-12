@@ -18,6 +18,7 @@ import type { SimulationRecord } from '@/data/simulation';
 import { parseCurrency } from '@/utils/currency';
 import { getMonthTotals } from '@/utils/finance';
 import { formatBRL, formatMonthLong, formatMonthShort } from '@/utils/format';
+import { sortSimulationsByRecency } from '@/utils/simulationRecords';
 
 type Period = 3 | 6 | 12 | 0;
 type Source = 'planning' | 'simulations';
@@ -99,7 +100,8 @@ export function FinancialEvolutionChart({
       }));
     }
 
-    const sorted = [...simulations].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+    // Ordem cronológica (mais antiga → mais recente).
+    const sorted = sortSimulationsByRecency(simulations).reverse();
     const sliced = period ? sorted.slice(-period) : sorted;
     return sliced.map((s) => ({
       key: s.id,
