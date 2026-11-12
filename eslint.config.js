@@ -7,7 +7,7 @@ import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
 export default defineConfig([
-  globalIgnores(['dist']),
+  globalIgnores(['dist', 'test-results', 'playwright-report', 'blob-report']),
   {
     files: ['**/*.{ts,tsx}'],
     plugins: {
@@ -24,6 +24,18 @@ export default defineConfig([
     },
     rules: {
       'prettier/prettier': ['error', { tabWidth: 2, useTabs: false }],
+    },
+  },
+  {
+    // Testes ponta a ponta (Playwright): o `use` das fixtures não é um hook do
+    // React, e o Playwright exige `{}` quando a fixture não depende de outras.
+    files: ['e2e/**/*.ts', 'playwright.config.ts'],
+    languageOptions: {
+      globals: { ...globals.node, ...globals.browser },
+    },
+    rules: {
+      'react-hooks/rules-of-hooks': 'off',
+      'no-empty-pattern': ['error', { allowObjectPatternsAsParameters: true }],
     },
   },
 ]);
