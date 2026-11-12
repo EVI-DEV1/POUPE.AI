@@ -114,6 +114,10 @@ npm run dev
 
 A IA é chamada pela rota `/api/gemini`: em desenvolvimento ela roda dentro do próprio Vite; na Vercel, em `api/gemini.ts`. Na Vercel, configure a variável de ambiente **GEMINI_API_KEY** (por compatibilidade, `VITE_GEMINI_API_KEY` ainda é aceita, mas só no servidor). Sem a chave, o app funciona normalmente e mostra um aviso amigável nas funções de IA.
 
+A rota `/api/gemini` aceita apenas `POST` em JSON vindo do próprio domínio, limita o tamanho do prompt (30 mil caracteres) e aplica rate limiting por IP (padrão: 10/min e 60/h por instância). Variáveis opcionais: `GEMINI_RATE_LIMIT_PER_MINUTE`, `GEMINI_RATE_LIMIT_PER_HOUR` e `ALLOWED_ORIGINS` (domínios extras, separados por vírgula).
+
+O projeto usa **npm** (`package-lock.json`); não use pnpm ou yarn.
+
 ⬡ Scripts Disponíveis
 
 ⬡ npm run dev → ambiente de desenvolvimento
@@ -123,6 +127,8 @@ A IA é chamada pela rota `/api/gemini`: em desenvolvimento ela roda dentro do p
 ⬡ npm run preview → visualização local do build (inclui a rota /api/gemini)
 
 ⬡ npm run lint → análise de código
+
+⬡ npm test → testes (Vitest)
 
 ---
 
