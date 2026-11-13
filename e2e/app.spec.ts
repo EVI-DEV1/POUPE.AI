@@ -1,4 +1,4 @@
-import { expect, geminiText, readStorage, test } from './fixtures';
+import { expect, geminiText, readProfileStorage, test } from './fixtures';
 
 const ROUTES = [
   '/',
@@ -66,7 +66,7 @@ test.describe('dashboard', () => {
     await expect(dialog.getByText('Meta concluída: Reserva')).toBeVisible();
 
     // Nada foi apagado do localStorage.
-    expect(await readStorage(page, 'simulation-data')).toHaveLength(4);
+    expect(await readProfileStorage(page, 'simulation-data')).toHaveLength(4);
   });
 });
 
@@ -89,7 +89,7 @@ test.describe('simulações e histórico', () => {
     await expect(page.getByText('Diagnóstico de teste gerado pelo mock.')).toBeVisible();
     expect(geminiPrompts[0]).toContain('Viagem ao Japão');
 
-    const saved = (await readStorage(page, 'simulation-data')) as {
+    const saved = (await readProfileStorage(page, 'simulation-data')) as {
       goalName: string;
       createdAt: string;
       insight?: unknown;
@@ -100,7 +100,8 @@ test.describe('simulações e histórico', () => {
     await expect
       .poll(
         async () =>
-          !!((await readStorage(page, 'simulation-data')) as { insight?: unknown }[])[0].insight
+          !!((await readProfileStorage(page, 'simulation-data')) as { insight?: unknown }[])[0]
+            .insight
       )
       .toBe(true);
 
@@ -152,7 +153,7 @@ test.describe('metas', () => {
 
     await page.reload();
     await expect(page.getByText('Reserva de emergência').first()).toBeVisible();
-    const goals = (await readStorage(page, 'poupeai-goals')) as {
+    const goals = (await readProfileStorage(page, 'poupeai-goals')) as {
       name: string;
       targetAmount: number;
     }[];
@@ -174,7 +175,7 @@ test.describe('planejamento', () => {
     await page.getByRole('button', { name: 'Salvar mês' }).click();
 
     await page.reload();
-    const planning = (await readStorage(page, 'poupeai-planning')) as {
+    const planning = (await readProfileStorage(page, 'poupeai-planning')) as {
       months: { income: number; fixedExpenses: number }[];
     };
     expect(planning.months).toEqual([

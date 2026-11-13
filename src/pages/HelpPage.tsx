@@ -6,7 +6,15 @@ import { Panel } from '@/components/ui/Panel';
 const FAQ = [
   {
     q: 'Onde meus dados ficam salvos?',
-    a: 'No armazenamento local (localStorage) do seu navegador. Não há servidor nem conta: se você limpar os dados do navegador ou trocar de dispositivo, as informações não acompanham. Use Preferências → Exportar dados para guardar uma cópia.',
+    a: 'No armazenamento local (localStorage) do seu navegador, separados por perfil demonstrativo. Não há servidor de contas: se você limpar os dados do navegador ou trocar de dispositivo, as informações não acompanham. Use Preferências → Exportar dados para guardar uma cópia.',
+  },
+  {
+    q: 'O login protege meus dados?',
+    a: 'Não. Os perfis são demonstrativos: o cadastro e a sessão ficam apenas neste navegador e nada é enviado a um servidor. O login separa os dados de perfis diferentes no mesmo navegador, mas quem tem acesso ao aparelho consegue ler o armazenamento local. A senha é guardada de forma derivada (PBKDF2), nunca em texto puro — mesmo assim, use um e-mail fictício e uma senha que você não usa em outros lugares.',
+  },
+  {
+    q: 'Esqueci a senha. E agora?',
+    a: 'Como os perfis são locais, não existe recuperação por e-mail. Crie um novo perfil demonstrativo. Os dados do perfil anterior continuam salvos no navegador.',
   },
   {
     q: 'O Poupe.ai acessa minha conta bancária?',

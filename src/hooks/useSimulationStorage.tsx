@@ -1,21 +1,24 @@
+import { activeProfileKey, PROFILE_DATA_KEYS, PROFILE_SCOPE_DEPENDENCIES } from '@/auth/session';
 import { type SimulationFormData, type SimulationRecord } from '@/data/simulation';
 import { createLocalStore, isRecord, useLocalStore } from '@/lib/localStore';
 import { readSimulations } from '@/utils/simulationRecords';
 
 /**
- * Mantém a mesma chave e o mesmo formato de dados da versão anterior,
- * preservando todo o histórico já salvo pelos usuários.
+ * Mesmo formato de dados da versão anterior, agora em uma chave por perfil
+ * demonstrativo. A chave antiga (`simulation-data`) não é alterada: seus
+ * registros podem ser copiados para um perfil (ver auth/legacyImport.ts).
  *
  * O store guarda o array bruto (`unknown[]`): as escritas operam sobre ele, então
  * registros antigos ou incompletos nunca são descartados do localStorage. A UI
  * consome apenas a visão validada de `readSimulations`.
  */
-const LOCAL_STORAGE_KEY = 'simulation-data';
-
 const EMPTY: unknown[] = [];
 
-export const simulationStore = createLocalStore<unknown[]>(LOCAL_STORAGE_KEY, EMPTY, (value) =>
-  Array.isArray(value) ? value : EMPTY
+export const simulationStore = createLocalStore<unknown[]>(
+  () => activeProfileKey(PROFILE_DATA_KEYS.simulations),
+  EMPTY,
+  (value) => (Array.isArray(value) ? value : EMPTY),
+  PROFILE_SCOPE_DEPENDENCIES
 );
 
 const isSimulation = (record: unknown, id: string) => isRecord(record) && record.id === id;

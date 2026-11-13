@@ -1,8 +1,12 @@
 import type { ComponentType } from 'react';
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 
+import { PrivateRoute } from './components/auth/PrivateRoute';
+import { PublicOnlyRoute } from './components/auth/PublicOnlyRoute';
 import { RootLayout } from './components/layout/RootLayout';
 import { RouteError } from './components/layout/RouteError';
+import { LoginPage } from './pages/auth/LoginPage';
+import { SignupPage } from './pages/auth/SignupPage';
 import { DashboardPage } from './pages/DashboardPage';
 
 /** Carrega a página sob demanda (code splitting por rota). */
@@ -12,7 +16,21 @@ const page = <T extends Record<string, unknown>>(loader: () => Promise<T>, name:
 
 export const router = createBrowserRouter([
   {
-    element: <RootLayout />,
+    // Acesso: só para quem ainda não tem sessão.
+    element: <PublicOnlyRoute />,
+    errorElement: <RouteError />,
+    children: [
+      { path: '/entrar', element: <LoginPage /> },
+      { path: '/cadastro', element: <SignupPage /> },
+    ],
+  },
+  {
+    // Área do app: visitantes sem sessão vão para /entrar.
+    element: (
+      <PrivateRoute>
+        <RootLayout />
+      </PrivateRoute>
+    ),
     errorElement: <RouteError />,
     hydrateFallbackElement: <></>,
     children: [

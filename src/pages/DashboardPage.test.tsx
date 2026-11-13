@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { FinancialEvolutionChart } from '@/components/features/Dashboard/FinancialEvolutionChart';
 import { NotificationsMenu } from '@/components/layout/NotificationsMenu';
-import { mixedSimulationData, stubLocalStorage } from '@/test/fixtures';
+import { activeProfileStorage, mixedSimulationData, stubLocalStorage } from '@/test/fixtures';
 import { readSimulations } from '@/utils/simulationRecords';
 
 import { DashboardPage } from './DashboardPage';
@@ -38,20 +38,20 @@ const render = (node: React.ReactNode) =>
 
 describe('abertura do dashboard com dados existentes', () => {
   it('renderiza o menu de notificações sem lançar erro', () => {
-    stubLocalStorage(existingData());
+    stubLocalStorage(activeProfileStorage(existingData()));
     expect(() => render(<NotificationsMenu />)).not.toThrow();
     expect(render(<NotificationsMenu />)).toContain('não lida(s)');
   });
 
   it('renderiza o dashboard sem lançar erro', () => {
-    stubLocalStorage(existingData());
+    stubLocalStorage(activeProfileStorage(existingData()));
     const html = render(<DashboardPage />);
     // As simulações válidas (inclusive as antigas) continuam aparecendo.
     expect(html).toContain('Reforma');
   });
 
   it('renderiza o gráfico e o histórico com registros antigos', () => {
-    stubLocalStorage(existingData());
+    stubLocalStorage(activeProfileStorage(existingData()));
     expect(() => render(<SimulationHistoryPage />)).not.toThrow();
     expect(render(<SimulationHistoryPage />)).toContain('Viagem');
     expect(() =>

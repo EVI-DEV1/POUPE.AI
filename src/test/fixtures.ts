@@ -1,5 +1,30 @@
 import { vi } from 'vitest';
 
+import { profileKey, SESSION_KEY, USERS_KEY, type DemoUser } from '@/auth/session';
+
+export const TEST_USER_ID = 'perfil-teste';
+
+/** Perfil demonstrativo de teste (o registro de senha não é usado nesses testes). */
+export const testUser = (id = TEST_USER_ID): DemoUser => ({
+  id,
+  name: `Perfil ${id}`,
+  email: `${id}@exemplo.com`,
+  password: { algorithm: 'PBKDF2-SHA256', iterations: 1, salt: 'AA==', hash: 'AA==' },
+  createdAt: '2026-11-01T00:00:00.000Z',
+});
+
+/** Entradas do localStorage para um perfil com sessão ativa e os dados informados. */
+export const activeProfileStorage = (
+  profileData: Record<string, unknown> = {},
+  id = TEST_USER_ID
+): Record<string, unknown> => ({
+  [USERS_KEY]: [testUser(id)],
+  [SESSION_KEY]: { userId: id, startedAt: '2026-11-01T00:00:00.000Z' },
+  ...Object.fromEntries(
+    Object.entries(profileData).map(([base, value]) => [profileKey(id, base), value])
+  ),
+});
+
 /** localStorage em memória para testes que passam pelos stores reais. */
 export function stubLocalStorage(initial: Record<string, unknown> = {}) {
   const data = new Map<string, string>(

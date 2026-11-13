@@ -1,15 +1,18 @@
-import { Download, Moon, PanelLeftClose, Sun, Trash2 } from 'lucide-react';
+import { DatabaseBackup, Download, Moon, PanelLeftClose, Sun, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
+import { importLegacyData, readLegacyClaim, summarizeLegacyData } from '@/auth/legacyImport';
+import { LegacySummaryList } from '@/components/auth/LegacySummaryList';
 import { PageHero } from '@/components/shared/PageHero';
 import { UIButton } from '@/components/ui/Button';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { Panel } from '@/components/ui/Panel';
+import { useAuth } from '@/hooks/useAuth';
 import { simulationStore } from '@/hooks/useSimulationStorage';
 import { useTheme } from '@/hooks/useTheme';
 import {
-  APP_STORAGE_KEYS,
   assistantChatStore,
+  exportableStorageKeys,
   goalsStore,
   planningStore,
   preferencesStore,
@@ -28,6 +31,45 @@ const CLEAR_OPTIONS: { id: ClearTarget; label: string; description: string }[] =
   { id: 'planning', label: 'Planejamento', description: 'Saldo informado e meses registrados.' },
   { id: 'chat', label: 'Chat com IA', description: 'Conversa do chat geral.' },
 ];
+
+/** Dados salvos antes dos perfis demonstrativos: importação opcional. */
+function LegacyDataPanel({ userId }: { userId: string }) {
+  const [claim, setClaim] = useState(readLegacyClaim);
+  const [summary] = useState(summarizeLegacyData);
+
+  if (!claim && summary.total === 0) return null;
+
+  return (
+    <Panel title="Dados anteriores deste navegador">
+      {claim ? (
+        <p className="text-muted-foreground -mt-2 text-sm">
+          {claim.userId === userId
+            ? 'Os dados salvos antes dos perfis demonstrativos já foram importados para este perfil.'
+            : 'Os dados salvos antes dos perfis demonstrativos foram importados por outro perfil deste navegador.'}{' '}
+          Os registros originais continuam guardados no navegador.
+        </p>
+      ) : (
+        <>
+          <p className="text-muted-foreground -mt-2 mb-4 text-sm">
+            Há dados salvos aqui antes dos perfis demonstrativos. Eles podem ser copiados para este
+            perfil (os originais não são apagados). Apenas um perfil pode importá-los.
+          </p>
+          <LegacySummaryList summary={summary} />
+          <UIButton
+            className="mt-4"
+            icon={DatabaseBackup}
+            onClick={() => {
+              importLegacyData(userId);
+              setClaim(readLegacyClaim());
+            }}
+          >
+            Importar para este perfil
+          </UIButton>
+        </>
+      )}
+    </Panel>
+  );
+}
 
 function Toggle({
   checked,
@@ -58,10 +100,12 @@ export function PreferencesPage() {
   const { theme, setTheme } = useTheme();
   const { sidebarCollapsed } = usePreferences();
   const [clearing, setClearing] = useState<ClearTarget | null>(null);
+  const { user } = useAuth();
 
   const exportData = () => {
     const data: Record<string, unknown> = { exportedAt: new Date().toISOString(), app: 'Poupe.ai' };
-    Object.entries(APP_STORAGE_KEYS).forEach(([name, key]) => {
+    Object.entries(exportableStorageKeys()).forEach(([name, key]) => {
+      if (!key) return;
       try {
         const raw = localStorage.getItem(key);
         data[name] = raw ? JSON.parse(raw) : null;
@@ -140,7 +184,8 @@ export function PreferencesPage() {
 
       <Panel title="Seus dados">
         <p className="text-muted-foreground -mt-2 mb-4 text-sm">
-          Tudo fica salvo no armazenamento local deste navegador. Exporte uma cópia antes de limpar.
+          Os dados deste perfil demonstrativo ficam salvos apenas neste navegador. Exportar e apagar
+          afetam somente este perfil. Exporte uma cópia antes de limpar.
         </p>
         <UIButton variant="secondary" icon={Download} onClick={exportData}>
           Exportar dados (JSON)
@@ -166,6 +211,8 @@ export function PreferencesPage() {
           ))}
         </ul>
       </Panel>
+
+      {user && <LegacyDataPanel userId={user.id} />}
 
       <ConfirmDialog
         open={!!clearing}
