@@ -1,14 +1,17 @@
-import { ChevronDown, CircleQuestionMark, Moon, Settings, Sun, User } from 'lucide-react';
+import { ChevronDown, CircleQuestionMark, LogOut, Moon, Settings, Sun, User } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { Avatar } from '@/components/ui/Avatar';
+import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/hooks/useTheme';
 import { useProfile } from '@/stores';
 
 export function ProfileMenu() {
   const navigate = useNavigate();
   const profile = useProfile();
+  const { user, signOut } = useAuth();
+  const displayName = profile.name || user?.name || 'Visitante';
   const { theme, toggleTheme } = useTheme();
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -41,6 +44,16 @@ export function ProfileMenu() {
       onClick: toggleTheme,
     },
     { label: 'Ajuda e Suporte', icon: CircleQuestionMark, onClick: () => go('/ajuda') },
+    {
+      label: 'Sair',
+      icon: LogOut,
+      onClick: () => {
+        setOpen(false);
+        signOut();
+        // O PrivateRoute leva ao login; os dados do perfil continuam salvos.
+        void navigate('/entrar', { replace: true });
+      },
+    },
   ];
 
   return (
@@ -56,11 +69,9 @@ export function ProfileMenu() {
         <Avatar profile={profile} size={46} />
         <span className="hidden min-w-0 text-left md:block">
           <span className="block max-w-36 truncate text-[0.95rem] font-semibold">
-            {profile.name || 'Visitante'}
+            {displayName}
           </span>
-          <span className="text-muted-foreground block text-xs">
-            {profile.name ? 'Plano Gratuito' : 'Configure seu perfil'}
-          </span>
+          <span className="text-muted-foreground block text-xs">Perfil demonstrativo</span>
         </span>
         <ChevronDown
           size={20}
@@ -73,8 +84,15 @@ export function ProfileMenu() {
         <div
           role="menu"
           aria-label="Perfil"
-          className="surface animate-fade-up absolute right-0 top-full z-40 mt-2 w-60 p-1.5"
+          className="surface animate-fade-up absolute right-0 top-full z-40 mt-2 w-64 p-1.5"
         >
+          <div className="border-border mb-1 border-b px-3 pb-2.5 pt-2" role="none">
+            <p className="truncate text-sm font-semibold">{displayName}</p>
+            <p className="text-muted-foreground truncate text-xs">{user?.email}</p>
+            <p className="text-muted-foreground/80 mt-1 text-[0.7rem]">
+              Conta demonstrativa, salva só neste navegador
+            </p>
+          </div>
           {items.map(({ label, icon: Icon, onClick }) => (
             <button
               key={label}

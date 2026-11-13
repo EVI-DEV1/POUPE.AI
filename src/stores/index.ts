@@ -7,7 +7,11 @@ import type {
   Preferences,
   Profile,
 } from '@/data/finance';
+import { activeProfileKey, PROFILE_DATA_KEYS, PROFILE_SCOPE_DEPENDENCIES } from '@/auth/session';
 import { createLocalStore, isRecord, useLocalStore } from '@/lib/localStore';
+
+/** Chave por perfil: cada perfil demonstrativo só enxerga os próprios dados. */
+const scoped = (base: string) => () => activeProfileKey(base);
 
 const toNumber = (value: unknown, fallback = 0) =>
   typeof value === 'number' && Number.isFinite(value) ? value : fallback;
@@ -22,14 +26,18 @@ export const AVATAR_COLORS = ['#9333EA', '#EC4899', '#22D3EE', '#F59E0B', '#10B9
 
 const DEFAULT_PROFILE: Profile = { name: '', avatarColor: AVATAR_COLORS[0], avatarImage: null };
 
-export const profileStore = createLocalStore<Profile>('poupeai-profile', DEFAULT_PROFILE, (v) =>
-  isRecord(v)
-    ? {
-        name: toString(v.name).slice(0, 40),
-        avatarColor: toString(v.avatarColor, DEFAULT_PROFILE.avatarColor),
-        avatarImage: typeof v.avatarImage === 'string' ? v.avatarImage : null,
-      }
-    : DEFAULT_PROFILE
+export const profileStore = createLocalStore<Profile>(
+  scoped(PROFILE_DATA_KEYS.profile),
+  DEFAULT_PROFILE,
+  (v) =>
+    isRecord(v)
+      ? {
+          name: toString(v.name).slice(0, 40),
+          avatarColor: toString(v.avatarColor, DEFAULT_PROFILE.avatarColor),
+          avatarImage: typeof v.avatarImage === 'string' ? v.avatarImage : null,
+        }
+      : DEFAULT_PROFILE,
+  PROFILE_SCOPE_DEPENDENCIES
 );
 
 export const useProfile = () => useLocalStore(profileStore);
@@ -54,24 +62,28 @@ export const usePreferences = () => useLocalStore(preferencesStore);
 
 const EMPTY_GOALS: Goal[] = [];
 
-export const goalsStore = createLocalStore<Goal[]>('poupeai-goals', EMPTY_GOALS, (v) =>
-  Array.isArray(v)
-    ? v.filter(isRecord).map((g) => ({
-        id: toString(g.id, crypto.randomUUID()),
-        name: toString(g.name, 'Meta'),
-        category: toString(g.category, 'other') as Goal['category'],
-        targetAmount: toNumber(g.targetAmount),
-        savedAmount: toNumber(g.savedAmount),
-        deadline: toString(g.deadline),
-        // Sem data válida → `null`, em vez de fingir que a meta foi alterada agora.
-        createdAt: typeof g.createdAt === 'string' ? g.createdAt : null,
-        updatedAt: typeof g.updatedAt === 'string' ? g.updatedAt : null,
-        contributions: Array.isArray(g.contributions)
-          ? (g.contributions as GoalContribution[])
-          : [],
-        simulationId: typeof g.simulationId === 'string' ? g.simulationId : undefined,
-      }))
-    : EMPTY_GOALS
+export const goalsStore = createLocalStore<Goal[]>(
+  scoped(PROFILE_DATA_KEYS.goals),
+  EMPTY_GOALS,
+  (v) =>
+    Array.isArray(v)
+      ? v.filter(isRecord).map((g) => ({
+          id: toString(g.id, crypto.randomUUID()),
+          name: toString(g.name, 'Meta'),
+          category: toString(g.category, 'other') as Goal['category'],
+          targetAmount: toNumber(g.targetAmount),
+          savedAmount: toNumber(g.savedAmount),
+          deadline: toString(g.deadline),
+          // Sem data válida → `null`, em vez de fingir que a meta foi alterada agora.
+          createdAt: typeof g.createdAt === 'string' ? g.createdAt : null,
+          updatedAt: typeof g.updatedAt === 'string' ? g.updatedAt : null,
+          contributions: Array.isArray(g.contributions)
+            ? (g.contributions as GoalContribution[])
+            : [],
+          simulationId: typeof g.simulationId === 'string' ? g.simulationId : undefined,
+        }))
+      : EMPTY_GOALS,
+  PROFILE_SCOPE_DEPENDENCIES
 );
 
 export const useGoals = () => useLocalStore(goalsStore);
@@ -141,7 +153,7 @@ export const goalsActions = {
 const DEFAULT_PLANNING: PlanningData = { currentBalance: null, balanceUpdatedAt: null, months: [] };
 
 export const planningStore = createLocalStore<PlanningData>(
-  'poupeai-planning',
+  scoped(PROFILE_DATA_KEYS.planning),
   DEFAULT_PLANNING,
   (v) =>
     isRecord(v)
@@ -163,7 +175,8 @@ export const planningStore = createLocalStore<PlanningData>(
               }))
             : [],
         }
-      : DEFAULT_PLANNING
+      : DEFAULT_PLANNING,
+  PROFILE_SCOPE_DEPENDENCIES
 );
 
 export const usePlanning = () => useLocalStore(planningStore);
@@ -199,9 +212,10 @@ export const planningActions = {
 const EMPTY_IDS: string[] = [];
 
 export const readNotificationsStore = createLocalStore<string[]>(
-  'poupeai-notifications-read',
+  scoped(PROFILE_DATA_KEYS.notifications),
   EMPTY_IDS,
-  (v) => (Array.isArray(v) ? v.filter((id): id is string => typeof id === 'string') : EMPTY_IDS)
+  (v) => (Array.isArray(v) ? v.filter((id): id is string => typeof id === 'string') : EMPTY_IDS),
+  PROFILE_SCOPE_DEPENDENCIES
 );
 
 export const useReadNotifications = () => useLocalStore(readNotificationsStore);
@@ -213,21 +227,25 @@ export const useReadNotifications = () => useLocalStore(readNotificationsStore);
 const EMPTY_MESSAGES: AssistantMessage[] = [];
 
 export const assistantChatStore = createLocalStore<AssistantMessage[]>(
-  'poupeai-assistant-chat',
+  scoped(PROFILE_DATA_KEYS.assistantChat),
   EMPTY_MESSAGES,
-  (v) => (Array.isArray(v) ? (v as AssistantMessage[]) : EMPTY_MESSAGES)
+  (v) => (Array.isArray(v) ? (v as AssistantMessage[]) : EMPTY_MESSAGES),
+  PROFILE_SCOPE_DEPENDENCIES
 );
 
 export const useAssistantChat = () => useLocalStore(assistantChatStore);
 
-/** Todas as chaves usadas pelo app — usado para exportar/limpar dados. */
-export const APP_STORAGE_KEYS = {
-  simulations: 'simulation-data',
+/**
+ * Chaves exportadas em Preferências → Exportar: os dados do perfil ativo e as
+ * preferências do aparelho. Nunca inclui a lista de perfis nem a sessão.
+ */
+export const exportableStorageKeys = () => ({
+  simulations: activeProfileKey(PROFILE_DATA_KEYS.simulations),
   goals: goalsStore.key,
   planning: planningStore.key,
   profile: profileStore.key,
-  preferences: preferencesStore.key,
   notifications: readNotificationsStore.key,
   assistantChat: assistantChatStore.key,
+  preferences: preferencesStore.key,
   theme: 'theme',
-} as const;
+});

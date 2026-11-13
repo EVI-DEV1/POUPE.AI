@@ -1,15 +1,20 @@
+import { profileKey } from '@/auth/session';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   currentSimulation,
   legacySimulation,
   mixedSimulationData,
+  activeProfileStorage,
   stubLocalStorage,
+  TEST_USER_ID,
 } from '@/test/fixtures';
 
 import { useSimulationStorage } from './useSimulationStorage';
 
-const KEY = 'simulation-data';
+// Dados do perfil ativo ficam na chave por perfil.
+const BASE = 'simulation-data';
+const KEY = profileKey(TEST_USER_ID, BASE);
 // O hook só devolve a API imperativa (sem estado do React), seguro de chamar fora de componente.
 // eslint-disable-next-line react-hooks/rules-of-hooks
 const storage = () => useSimulationStorage();
@@ -20,7 +25,7 @@ afterEach(() => {
 
 describe('simulation-data — nada é apagado do localStorage', () => {
   it('lê registros antigos sem alterar o que está gravado', () => {
-    const ls = stubLocalStorage({ [KEY]: mixedSimulationData() });
+    const ls = stubLocalStorage(activeProfileStorage({ [BASE]: mixedSimulationData() }));
     const before = ls.raw(KEY);
 
     expect(storage().getAllSimulations()).toHaveLength(7);
@@ -28,7 +33,7 @@ describe('simulation-data — nada é apagado do localStorage', () => {
   });
 
   it('salvar uma nova simulação preserva registros antigos e inválidos', () => {
-    const ls = stubLocalStorage({ [KEY]: mixedSimulationData() });
+    const ls = stubLocalStorage(activeProfileStorage({ [BASE]: mixedSimulationData() }));
     const id = storage().saveFormData(legacySimulation('novo'));
 
     const saved = ls.json(KEY) as unknown[];
@@ -39,7 +44,7 @@ describe('simulation-data — nada é apagado do localStorage', () => {
   });
 
   it('atualizar um registro antigo não inventa createdAt nem descarta os demais', () => {
-    const ls = stubLocalStorage({ [KEY]: mixedSimulationData() });
+    const ls = stubLocalStorage(activeProfileStorage({ [BASE]: mixedSimulationData() }));
     const api = storage();
     const legacy = api.getFormData('legacy-1');
     expect(legacy).not.toBeNull();
@@ -57,7 +62,9 @@ describe('simulation-data — nada é apagado do localStorage', () => {
   });
 
   it('atualizar preserva o createdAt original, mesmo quando inválido', () => {
-    const ls = stubLocalStorage({ [KEY]: [currentSimulation('numeric-date', 1717000000000)] });
+    const ls = stubLocalStorage(
+      activeProfileStorage({ [BASE]: [currentSimulation('numeric-date', 1717000000000)] })
+    );
     const api = storage();
     api.updateSimulation(
       'numeric-date',
@@ -68,7 +75,7 @@ describe('simulation-data — nada é apagado do localStorage', () => {
   });
 
   it('excluir remove só o registro pedido', () => {
-    const ls = stubLocalStorage({ [KEY]: mixedSimulationData() });
+    const ls = stubLocalStorage(activeProfileStorage({ [BASE]: mixedSimulationData() }));
     storage().deleteSimulation('legacy-2');
 
     const saved = ls.json(KEY) as unknown[];
