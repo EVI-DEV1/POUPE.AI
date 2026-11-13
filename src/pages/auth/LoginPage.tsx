@@ -41,7 +41,7 @@ export function LoginPage() {
 
   return (
     <AuthLayout
-      title="Entrar no Poupe.ai"
+      title="Entrar"
       subtitle="Acesse seu perfil demonstrativo para continuar de onde parou."
     >
       <form onSubmit={submit} noValidate className="flex flex-col gap-4">
