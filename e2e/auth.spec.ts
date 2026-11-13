@@ -61,17 +61,17 @@ async function signOut(page: Page) {
 const profileMenu = (page: Page) => page.getByRole('button', { name: 'Menu do perfil' });
 
 test.describe('acesso de visitantes', () => {
-  test('visitante é levado ao login, com aviso de modo demonstração', async ({ page }) => {
+  test('visitante é levado ao login e pode ir ao cadastro', async ({ page }) => {
     await page.goto('/metas');
     await expect(page).toHaveURL(/\/entrar$/);
-    await expect(page.getByRole('heading', { name: 'Entrar no Poupe.ai' })).toBeVisible();
-    await expect(page.getByLabel('Modo demonstração')).toContainText(
-      'nada é enviado a um servidor'
-    );
+    await expect(page.getByRole('heading', { name: 'Entrar', exact: true })).toBeVisible();
+    // O aviso destacado saiu das telas de acesso; a explicação fica na Ajuda.
+    await expect(page.getByLabel('Modo demonstração')).toHaveCount(0);
 
     await page.getByRole('link', { name: 'Criar perfil demonstrativo' }).click();
     await expect(page).toHaveURL(/\/cadastro$/);
-    await expect(page.getByLabel('Modo demonstração')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Criar conta', exact: true })).toBeVisible();
+    await expect(page.getByLabel('Modo demonstração')).toHaveCount(0);
   });
 
   test('cadastro mostra mensagens de validação', async ({ page }) => {

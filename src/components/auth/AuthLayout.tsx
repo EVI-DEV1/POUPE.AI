@@ -3,8 +3,6 @@ import type { PropsWithChildren } from 'react';
 
 import { Logo } from '@/components/layout/Logo';
 
-import { DemoNotice } from './DemoNotice';
-
 const HIGHLIGHTS = [
   { icon: Target, text: 'Simule metas e descubra se elas cabem no seu orçamento.' },
   { icon: Sparkles, text: 'Receba diagnósticos e sugestões de um assistente com IA.' },
@@ -50,11 +48,8 @@ export function AuthLayout({ title, subtitle, children }: PropsWithChildren<Auth
 
         <section className="surface animate-fade-up mx-auto w-full max-w-md p-6 sm:p-8">
           <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
-          <p className="text-muted-foreground mt-1 text-sm">{subtitle}</p>
-          <div className="mt-5">
-            <DemoNotice />
-          </div>
-          <div className="mt-6">{children}</div>
+          <p className="text-muted-foreground mt-1.5 text-sm">{subtitle}</p>
+          <div className="mt-7">{children}</div>
         </section>
       </main>
     </div>

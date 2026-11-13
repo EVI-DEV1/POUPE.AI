@@ -43,7 +43,7 @@ export function SignupPage() {
 
   return (
     <AuthLayout
-      title="Criar perfil demonstrativo"
+      title="Criar conta"
       subtitle="Leva menos de um minuto e mantém seus dados separados de outros perfis."
     >
       <form onSubmit={submit} noValidate className="flex flex-col gap-4">
